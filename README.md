@@ -4,6 +4,8 @@ This is code used to build the interactive web viewer for the LDLR non-coding la
 
 The production version of the viewer is accessible at: https://emmerlab.org/ldlr-noncoding
 
+The dev build (latest features) can be accessed at: https://emmerlab.github.io/LDLR-noncoding-browser
+
 ## Screenshots
 
 The full *LDLR* locus, with CRISPRn, CRISPRi and CRISPRa screens, MPRA activity, chromatin marks and conservation:
