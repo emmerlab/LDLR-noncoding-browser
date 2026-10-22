@@ -175,7 +175,7 @@ canvas { display: block; }
 
 /* ---------------------------------------------------------------- tray -- */
 .tray {
-  margin: 28px var(--page-pad) 40px;
+  margin: 28px var(--page-pad) 16px;
   padding-top: 12px; border-top: 1px solid var(--hairline);
 }
 .tray-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 10px; }
@@ -188,6 +188,7 @@ canvas { display: block; }
 }
 .chip:hover { border-color: var(--hairline-strong); background: var(--surface); }
 .tray-empty { margin: 0; color: var(--muted); }
+.viewer-footer { margin: 0 var(--page-pad) 24px; color: var(--muted); font-size: 12px; text-align: center; opacity: 0.6; }
 
 /* --------------------------------------------- menus, tooltips, popup -- */
 .menu, .tooltip, .popup {

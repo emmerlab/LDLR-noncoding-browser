@@ -105,7 +105,8 @@ export function createViewer(store: Store, defaultPosition: string): Viewer {
       </div>
       <div class="chips"></div>
       <p class="tray-empty">No hidden tracks. Hover a track name and click × to hide it.</p>
-    </section>`;
+    </section>
+    <footer class="viewer-footer">version ${__APP_VERSION__} (last modified ${__BUILD_TIME__})</footer>`;
 
   const $ = <T extends HTMLElement>(sel: string) => el.querySelector(sel) as T;
   const posInput = $<HTMLInputElement>('.pos-input');

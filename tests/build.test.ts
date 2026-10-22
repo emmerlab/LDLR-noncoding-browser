@@ -7,7 +7,7 @@ import path from 'node:path';
 import os from 'node:os';
 import zlib from 'node:zlib';
 import { beforeEach, describe, expect, it, afterEach } from 'vitest';
-import { getBuildFileName, versionCurrentBuild,  } from '../build/version-file';
+import { formatBuildTime, getBuildFileName, readVersion, versionCurrentBuild } from '../build/version-file';
 
 // test that the fresh build is copied to the build-history directory
 describe('move old builds', () => {
@@ -86,5 +86,42 @@ describe('correct build file name', () => {
     const actualFileName = getBuildFileName(version);
     const fileNameRegex = /^build-1\.2\.3-\d{6}-\d{6}\.html$/;
     expect(actualFileName).toMatch(fileNameRegex);
+  });
+});
+describe('footer build time', () => {
+  const testDate = new Date('2024-06-01T12:34:56Z');
+  it('formats as YY-MM-DD HH:MM UTC', () => {
+    expect(formatBuildTime(testDate)).toBe('24-06-01 12:34 UTC');
+  });
+  it('uses UTC regardless of the local offset', () => {
+    expect(formatBuildTime(new Date('2024-06-01T23:30:00-05:00'))).toBe('24-06-02 04:30 UTC');
+  });
+  it('matches the build-history file name for the same moment', () => {
+    const [date, time] = formatBuildTime(testDate).split(' ');
+    expect(getBuildFileName('1.2.3', testDate))
+      .toBe(`build-1.2.3-${date.replace(/-/g, '')}-${time.replace(':', '')}56.html`);
+  });
+});
+
+describe('read version from package.json', () => {
+  let sandboxDir: string;
+  beforeEach(() => {
+    sandboxDir = fs.mkdtempSync(path.join(os.tmpdir(), 'version-testing'));
+  });
+  afterEach(() => {
+    fs.rmSync(sandboxDir, { recursive: true, force: true });
+  });
+  it('returns the version field', () => {
+    fs.writeFileSync(path.join(sandboxDir, 'package.json'), JSON.stringify({ version: '1.2.3' }));
+    expect(readVersion(sandboxDir)).toBe('1.2.3');
+  });
+  it('falls back to 0.0.0 when there is no version field', () => {
+    fs.writeFileSync(path.join(sandboxDir, 'package.json'), JSON.stringify({ name: 'x' }));
+    expect(readVersion(sandboxDir)).toBe('0.0.0');
+  });
+  it('returns null when package.json is missing or invalid', () => {
+    expect(readVersion(sandboxDir)).toBeNull();
+    fs.writeFileSync(path.join(sandboxDir, 'package.json'), '{ not json');
+    expect(readVersion(sandboxDir)).toBeNull();
   });
 });
