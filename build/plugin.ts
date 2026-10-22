@@ -85,7 +85,7 @@ export async function buildBundle(root: string): Promise<BuildResult> {
 
   // ---- genome -----------------------------------------------------------
   const sizesFile = path.join(root, config.genome?.chromSizes ?? 'genome/chrom.sizes');
-  if (!fs.existsSync(sizesFile)) throw new Error(`chrom.sizes not found at ${path.relative(root, sizesFile)}. See README "Genome files".`);
+  if (!fs.existsSync(sizesFile)) throw new Error(`chrom.sizes not found at ${path.relative(root, sizesFile)}. See DEVELOPER.md "Genome files".`);
   const chroms = parseChromSizes(fs.readFileSync(sizesFile, 'utf8'));
   if (!chroms.length) throw new Error(`${path.relative(root, sizesFile)} contains no chromosomes.`);
   const chromSizes = new Map(chroms.map((x) => [x.name, x.size]));
@@ -238,8 +238,8 @@ export async function buildBundle(root: string): Promise<BuildResult> {
 
   const mb = json.length / 1048576;
   const limit = config.maxDataMB ?? 200;
-  if (mb > limit) throw new Error(`Bundled data is ${mb.toFixed(1)} MB, above maxDataMB (${limit}). See README "Large data".`);
-  if (mb > 50) warnings.push(`Bundled data is ${mb.toFixed(1)} MB; the page may load slowly. See README "Large data".`);
+  if (mb > limit) throw new Error(`Bundled data is ${mb.toFixed(1)} MB, above maxDataMB (${limit}). See DEVELOPER.md "Large data".`);
+  if (mb > 50) warnings.push(`Bundled data is ${mb.toFixed(1)} MB; the page may load slowly. See DEVELOPER.md "Large data".`);
   summary.push(`total data ${mb.toFixed(2)} MB (help images ${(help.imageBytes / 1048576).toFixed(2)} MB)`);
 
   const watched = [sizesFile, tracksDir, path.join(root, 'help'), path.join(root, 'genome'), path.join(root, 'tracks.config.ts')];

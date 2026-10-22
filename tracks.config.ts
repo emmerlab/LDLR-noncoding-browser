@@ -4,16 +4,16 @@
  * Optional settings for the browser. Every field is optional; delete this file
  * entirely and the build still works with defaults.
  *
- * Tracks are found automatically in tracks/. Use this file to:
+ * Tracks are found automatically in `tracksDir` (tracks/new_data here). Use this file to:
  *   - set the title, subtitle and starting position
  *   - order tracks (they appear in the order listed here; unlisted files follow
  *     alphabetically)
  *   - style tracks (label, color, height, y-axis title, ...)
  *
- * Keys under `tracks` are file names in tracks/ (or the name without extension).
+ * Keys under `tracks` are file names in that folder (or the name without extension).
  * Hover any option in your editor to see what it does (from build/config-schema.ts).
  *
- * The settings below style the SYNTHETIC demo files. Replace them with your own.
+ * The settings below style the LDLR tracks in tracks/new_data/.
  */
 import { defineConfig } from './build/config-schema';
 

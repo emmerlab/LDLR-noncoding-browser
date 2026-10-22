@@ -4,6 +4,8 @@ A genome browser that runs entirely in the web browser and builds into **one HTM
 
 The look is a clean, publication-figure style: white background, colored track names, slim y-axes, and peaks drawn directly under their signal.
 
+This repository is configured for the *LDLR* locus: the tracks are in `tracks/new_data/` (set by `tracksDir` in `tracks.config.ts`), the reference sequence is `genome/hg38_ldlr_region.fa`, and the help text is in `help/`. The data-preparation notebooks are in `py_data_manip/` (see its own `DEVELOPER.md`).
+
 ```
 tracks/*.wig  tracks/*.bedGraph  tracks/*.bed   ─┐
 genome/chrom.sizes   genome/*.fa (optional)      ├─►  npm run build  ─►  dist/index.html
@@ -37,33 +39,35 @@ tracks.config.ts (optional)                     ─┘
   - [10. Large data](#10-large-data)
   - [11. Troubleshooting](#11-troubleshooting)
   - [12. Unit Testing](#12-unit-testing)
+  - [13. Analytics](#13-analytics)
+  - [14. Versions and deployment](#14-versions-and-deployment)
 
 ---
 
 ## 1. Quick start
 
-Windows:
+Requirements: [Node.js](https://nodejs.org) 18 or newer. On Windows, [nvm-windows](https://github.com/coreybutler/nvm-windows) is an easy way to install it:
 
 ```powershell
 nvm install 24
 nvm use 24
 ```
 
-Requirements: [Node.js](https://nodejs.org) 18 or newer.
+Then:
 
 ```bash
 npm install          # once
 npm run build        # → dist/index.html
 ```
 
-Open `dist/index.html` in any modern browser. The project ships with **synthetic demo data** (files named `demo_*`) so the first build shows something.
+Open `dist/index.html` in any modern browser. Synthetic demo files (`demo_*`, made by `npm run demo-data`) are in `tracks/test_tracks/` and `genome/demo_sequence.fa`; they are not part of the LDLR build.
 
 | Command | What it does |
 | --- | --- |
 | `npm run dev` | Live development server at http://localhost:5173. Edits to code, data, help or config reload the page automatically. |
-| `npm run build` | Builds the single file `dist/index.html`. Prints a summary of every track and any warnings. |
+| `npm run build` | Builds the single file `dist/index.html`. Prints a summary of every track and any warnings, and saves a copy in `build-history/` (see [Versions and deployment](#14-versions-and-deployment)). |
 | `npm run preview` | Serves the built `dist/` folder locally to check it. |
-| `npm test` | Runs the unit tests (parsers, coordinates, zoom math, packing, router, config validation). |
+| `npm test` | Runs the unit tests (parsers, coordinates, zoom math, packing, router, config validation, track layout, build versioning, analytics). |
 | `npm run typecheck` | Type-checks all TypeScript without building. |
 | `npm run demo-data` | Regenerates the synthetic `demo_*` files. |
 
@@ -71,8 +75,7 @@ Open `dist/index.html` in any modern browser. The project ships with **synthetic
 
 ## 2. Adding your own data
 
-1. **Delete the demo files:** `tracks/demo_*`, `genome/demo_sequence.fa`, `help/tracks/demo_*.md`, and the demo entries in `tracks.config.ts`.
-2. **Copy your files into `tracks/`.** Supported formats (each may also be gzipped, e.g. `atac.bedGraph.gz`):
+1. **Copy your files into the tracks folder:** `tracks/new_data/` here, or whatever `tracksDir` in `tracks.config.ts` points to (default `tracks/`). Only that one folder is read; subfolders are ignored. Supported formats (each may also be gzipped, e.g. `atac.bedGraph.gz`):
 
    | Extension | Format | Notes |
    | --- | --- | --- |
@@ -82,11 +85,9 @@ Open `dist/index.html` in any modern browser. The project ships with **synthetic
 
    UCSC `track` header lines are honored (`name`, `description`, `color`, `altColor`, `visibility`, `itemRgb`, `viewLimits`, `windowingFunction`, `graphType`, `maxHeightPixels`), so UCSC custom-track files work unchanged.
 
-   `tracks.config.ts` also supports `tracksDir` so tracks can be in a seperate directory on the system.
-
-3. **If your genome is not hg38,** replace `genome/chrom.sizes` (see [Genome files](#4-genome-files)).
-4. **Run `npm run build`.** Every file in `tracks/` becomes a track automatically, named after its `track name=` line or its file name.
-5. **Optional:** style and order tracks in `tracks.config.ts`, and describe them in `help/`.
+2. **If your genome is not hg38,** replace `genome/chrom.sizes` (see [Genome files](#4-genome-files)).
+3. **Run `npm run build`.** Every supported file in the tracks folder becomes a track automatically, named after its `track name=` line or its file name.
+4. **Optional:** style and order tracks in `tracks.config.ts`, and describe them in `help/tracks/<id>.md`.
 
 Binary **bigWig / bigBed** files are not read directly. Convert them with the UCSC tools:
 
@@ -145,6 +146,8 @@ export default defineConfig({
 | `sequenceTrack.hidden` | `false` | Start with the sequence track in the hidden tray. |
 | `maxDataMB` | `200` | Build fails if bundled data exceeds this. A warning appears above 50 MB. |
 | `tracks` | `{}` | Per-track settings, keyed by file name or id. **Order here = order in the viewer.** Files not listed follow alphabetically. |
+| `tracksDir` | `"tracks"` | Folder scanned for track files, relative to the project root. This project uses `"tracks/new_data"`. |
+| `analytics.goatcounter` | none | GoatCounter count endpoint, `"https://<code>.goatcounter.com/count"`. Omit to count nothing. See [Analytics](#13-analytics). |
 
 ### Per-track settings
 
@@ -165,8 +168,9 @@ export default defineConfig({
 | `itemRgb` | BED | auto | Color features from BED column 9. On automatically when that column has colors. |
 | `centerLine` | BED | `false` | Thin gray line through the middle of each row (nice for dense rows). |
 | `featureLabels` | BED | `true` | Draw feature names in pack/full mode. |
-| `after` | all | `""` | single string or list of strings representing the filenames of the tracks that this track should proceed when added back to the viewer. If the track mentioned in after is added back to the viewer it will default to be added above all the tracks in after |
-| `missingParentName` | all | `""` | The track label to change to if the tracks in `after` are hidden. Will not invoke if no tracks are specified in `after`. |
+| `centerLabel` | all | `false` | Center the track name vertically on the track instead of aligning it to the top. |
+| `after` | all | none | The track(s) this one belongs under: a file name or id, or a list of them. When this track is re-added from the hidden tray, it goes just below the lowest visible of them (and below their other followers). Dragging ignores it. |
+| `missingParentName` | all | none | Label to show instead while every track in `after` is hidden, e.g. so an unlabeled peaks track still has a name. Has no effect without `after`. |
 
 Precedence: built-in defaults < the file's `track` line < `tracks.config.ts`. Viewers can still change mode, windowing and scaling from the right-click menu; that choice is remembered in their browser only.
 
@@ -184,14 +188,14 @@ https://hgdownload.soe.ucsc.edu/goldenPath/mm39/bigZips/mm39.chrom.sizes
 
 You can trim it to the chromosomes you need; data on chromosomes not listed is skipped with a build warning. Chromosome names must match your track files exactly (`chr7` vs `7`).
 
-**FASTA (optional).** Gives the sequence track, which shows letters at high zoom. Any `*.fa`, `*.fasta` or `*.fna` (optionally `.gz`) in `genome/` is used. The header decides placement:
+**FASTA (optional).** Gives the sequence track, which shows letters at high zoom. Set `genome.fasta` in `tracks.config.ts` to choose the file (this project uses `genome/hg38_ldlr_region.fa`); if it isn't set, the first `*.fa`, `*.fasta` or `*.fna` (optionally `.gz`) in `genome/` is used. The header decides placement:
 
 ```
 >chr7                      the whole chromosome, starting at base 1
 >chr7:55000001-55300000    a slice (1-based, inclusive, UCSC style)
 ```
 
-The sequence is stored at 2 bits per base, so 1 Mb costs about 0.33 MB in the HTML (plus base64 overhead). A whole human genome is far too large for one HTML file; supply only the regions people will look at. The demo FASTA is **random sequence**, not real hg38.
+The sequence is stored at 2 bits per base, so 1 Mb costs about 0.33 MB in the HTML (plus base64 overhead). A whole human genome is far too large for one HTML file; supply only the regions people will look at. `genome/hg38_ldlr_region.fa` is real hg38 sequence around *LDLR*; `genome/demo_sequence.fa` is **random sequence** for the demo files only.
 
 ---
 
@@ -267,15 +271,23 @@ The position is kept in the URL (`#/viewer?pos=chr7:...`), so a bookmark or shar
 ## 7. What each file does
 
 ```
-├─ README.md               this file
-├─ package.json            scripts and dependencies
-├─ vite.config.ts          build setup: data plugin + single-file inlining
+├─ README.md               project overview, links, screenshots
+├─ DEVELOPER.md            this file
+├─ LICENSE, COPYRIGHT.txt  GPL-3.0 license and third-party notices
+├─ package.json            scripts, dependencies, and the version shown in the footer
+├─ vite.config.ts          build setup: data plugin, single-file inlining, versioning
 ├─ tsconfig.json           TypeScript settings
 ├─ index.html              page shell; %APP_TITLE% is replaced at build time
 ├─ tracks.config.ts        YOUR settings (optional)
-├─ tracks/                 YOUR data files
+├─ tracks/                 YOUR data files (new_data/ = LDLR tracks, test_tracks/ = demo files)
 ├─ genome/                 chrom.sizes + optional FASTA
 ├─ help/                   YOUR help Markdown and images
+├─ dist/index.html         the built page (committed; deployed to GitHub Pages)
+├─ build-history/          a copy of every build (not committed)
+├─ docs/screenshots/       images used in README.md
+├─ py_data_manip/          notebooks that prepared the track files
+├─ .github/workflows/
+│  └─ pages.yml            deploys dist/index.html to GitHub Pages
 │
 ├─ shared/
 │  └─ types.ts             data shapes shared by build and browser (the "contract")
@@ -290,13 +302,15 @@ The position is kept in the URL (`#/viewer?pos=chr7:...`), so a bookmark or shar
 │  ├─ parse-fasta.ts       FASTA → 2-bit packed sequence
 │  ├─ pyramid.ts           zoom-level summaries for signal tracks
 │  ├─ encode.ts            typed arrays → base64
-│  └─ help.ts              Markdown → HTML, image inlining, TOC, facts boxes
+│  ├─ help.ts              Markdown → HTML, image inlining, TOC, facts boxes
+│  └─ version-file.ts      version + build time for the footer; saves each build to build-history/
 │
 ├─ src/                    runs in the browser
 │  ├─ main.ts              entry point: loads data, creates store, mounts pages, starts router
-│  ├─ env.d.ts             type of the `virtual:genome-data` module
+│  ├─ env.d.ts             types for build-provided values (`virtual:genome-data`, footer version/time)
 │  ├─ router.ts            #/viewer and #/help routing
 │  ├─ state.ts             view position + track layout; URL and localStorage persistence
+│  ├─ analytics.ts         GoatCounter visit counting (see Analytics)
 │  ├─ core/
 │  │  ├─ coords.ts         0-based ↔ 1-based conversion, position parsing, nice numbers
 │  │  └─ packing.ts        row packing for BED features
@@ -344,6 +358,8 @@ The position is kept in the URL (`#/viewer?pos=chr7:...`), so a bookmark or shar
 7. Hashes the result (used to reset saved layouts when data changes) and returns it as a JavaScript module.
 
 `vite-plugin-singlefile` then inlines all JavaScript and CSS into `dist/index.html`.
+
+`build/version-file.ts` is a second, smaller plugin. When the build starts it reads the version from `package.json` and the current time (UTC) and passes both to the page for the viewer footer; after `dist/index.html` is written it saves a copy to `build-history/` named with the same version and time.
 
 ### Run time (`src/`)
 
@@ -399,8 +415,48 @@ Everything lives in one HTML file that the browser loads into memory, so size ma
 
 ## 12. Unit Testing
 
-Run specific tests:
+Tests are in `tests/` and use [Vitest](https://vitest.dev). Run them all with `npm test`, or one file:
 
 ```
-npx vitest run .\tests\build.test.ts
+npx vitest run tests/build.test.ts
 ```
+
+---
+
+## 13. Analytics
+
+Visits are counted with [GoatCounter](https://www.goatcounter.com): no cookies, no consent banner, and IP addresses are never stored.
+
+**Monitor:** sign in at https://ldlr-noncoding.goatcounter.com to see visitors, pageviews, referrers and locations (country and region). Use **Settings → Export** to download the raw data as CSV; export quarterly as a backup.
+
+**What is counted:** one hit when the page loads, and one each time a visitor switches between the viewer and help. Panning, zooming and hiding tracks are not counted. GoatCounter counts a visitor once per page per ~8 hours.
+
+**Separating deployments:** every hit's path starts with where the page was served from, so filter the dashboard by prefix:
+
+| Path prefix | Source |
+| --- | --- |
+| `emmerlab.org/ldlr-noncoding` | production |
+| `emmerlab.github.io/LDLR-noncoding-browser/` | dev build (GitHub Pages) |
+| `localhost:<port>/` | local build (`npm run preview`) |
+| `file` | local build opened as a file |
+
+`npm run dev` never counts. Visitors with ad blockers may not be counted, so treat totals as a minimum.
+
+**Code:** `src/analytics.ts` sends the counts (it calls GoatCounter's [count endpoint](https://www.goatcounter.com/help/pixel) directly rather than loading `count.js`); `src/main.ts` calls it on page switches. The endpoint is `analytics.goatcounter` in `tracks.config.ts`; remove it to turn counting off.
+
+---
+
+## 14. Versions and deployment
+
+**Version and footer.** The viewer footer shows `version <x.y.z> (last modified YY-MM-DD HH:MM UTC)`. The version is `version` in `package.json`; the time is when `npm run build` ran. To release a new version, bump `version` in `package.json` before building.
+
+**Build history.** Every `npm run build` also saves a copy of the page as `build-history/build-<version>-<YYMMDD-HHMMSS>.html` (same version and UTC time as the footer). The folder is not committed; it is a local record of past builds.
+
+**Deployment.**
+
+| Site | URL | How it updates |
+| --- | --- | --- |
+| Dev build | https://emmerlab.github.io/LDLR-noncoding-browser | Automatically: `.github/workflows/pages.yml` deploys `dist/index.html` whenever a push to `main` changes it. You can also run the workflow by hand from the repository's **Actions** tab. |
+| Production | https://emmerlab.org/ldlr-noncoding | Updated separately from this repository. |
+
+So to publish a change to the dev build: bump the version if needed, run `npm run build`, commit `dist/index.html` with the source changes, and push to `main`.

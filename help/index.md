@@ -1,8 +1,6 @@
 <!-- # About this browser
 
-This page is written in `help/index.md`. Edit it to describe your project, your data and how to read the tracks. Everything here is plain [Markdown](https://commonmark.org/help/), turned into HTML when you run `npm run build`.
-
-The demo tracks in the viewer are **synthetic**: random numbers shaped to look like a typical screen. Replace them with your own files. -->
+This page is written in `help/index.md`. Edit it to describe your project, your data and how to read the tracks. Everything here is plain [Markdown](https://commonmark.org/help/), turned into HTML when you run `npm run build`. -->
 
 ## Reading a track
 

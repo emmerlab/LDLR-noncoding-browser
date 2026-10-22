@@ -64,7 +64,7 @@ function inlineImage(ctx: Ctx, src: string, mdFile: string, line: number, helpRo
   const buf = fs.readFileSync(abs);
   ctx.imageBytes += buf.length;
   if (buf.length > IMAGE_WARN_BYTES) {
-    ctx.warnings.push(`Help image ${rel(abs)} is ${(buf.length / 1024).toFixed(0)} KB; consider shrinking it (see README).`);
+    ctx.warnings.push(`Help image ${rel(abs)} is ${(buf.length / 1024).toFixed(0)} KB; consider shrinking it (see DEVELOPER.md "Images").`);
   }
   return `data:${mime};base64,${buf.toString('base64')}`;
 }

@@ -1,29 +1,31 @@
 /**
  * scripts/make-demo-data.ts
  * ----------------------------------------------------------------------------
- * Writes SYNTHETIC demo files so the template builds and shows something before
- * you add real data. Nothing here is real biology. Run with:
+ * Writes SYNTHETIC demo files for trying the browser without real data.
+ * Nothing here is real biology. Run with:
  *
  *   npm run demo-data
  *
- * Output (all on hg38 chr7:55,000,001-55,300,000):
- *   tracks/demo_genes.bed           BED12 gene models (made-up genes)
- *   tracks/demo_sprn.wig            fixedStep signal        + demo_sprn_hits.bed
- *   tracks/demo_spri.bedGraph       bedGraph signal         + demo_spri_hits.bed
- *   tracks/demo_spra.wig            variableStep signal     + demo_spra_hits.bed
- *   tracks/demo_atac.bedGraph       sparse log2FC peaks     + demo_atac_peaks.bed
- *   tracks/demo_h3k27ac.wig         broad domains with negatives + demo_h3k27ac_domains.bed
- *   tracks/demo_cons.bed            many small elements (dense row)
- *   tracks/demo_ccre.bed            BED9 with itemRgb colors (dense row)
- *   genome/demo_sequence.fa         random sequence for base-level zoom
+ * Output (all on hg38 chr7:55,000,001-55,300,000), in tracks/test_tracks/:
+ *   demo_genes.bed           BED12 gene models (made-up genes)
+ *   demo_sprn.wig            fixedStep signal        + demo_sprn_hits.bed
+ *   demo_spri.bedGraph       bedGraph signal         + demo_spri_hits.bed
+ *   demo_spra.wig            variableStep signal     + demo_spra_hits.bed
+ *   demo_atac.bedGraph       sparse log2FC peaks     + demo_atac_peaks.bed
+ *   demo_h3k27ac.wig         broad domains with negatives + demo_h3k27ac_domains.bed
+ *   demo_cons.bed            many small elements (dense row)
+ *   demo_ccre.bed            BED9 with itemRgb colors (dense row)
+ * and genome/demo_sequence.fa, random sequence for base-level zoom.
  *
- * Delete every demo_* file (and help/tracks/demo_*.md) when you add your own.
+ * To view them, point `tracksDir` and `genome.fasta` in tracks.config.ts at
+ * these files.
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const DEMO_TRACKS = 'tracks/test_tracks';
 const CHROM = 'chr7';
 const START = 55_000_000; // 0-based
 const END = 55_300_000;
@@ -65,7 +67,7 @@ const genes = [
   makeGene('DEMO3', 55_248_000, 55_268_000, '-', 5),
   makeGene('DEMO4', 55_276_000, 55_296_000, '+', 6),
 ];
-write('tracks/demo_genes.bed',
+write(`${DEMO_TRACKS}/demo_genes.bed`,
   'track name="Genes" description="Synthetic gene models for the demo"\n' +
   genes.map((g) => [
     CHROM, g.start, g.end, g.name, 0, g.strand, g.cds[0], g.cds[1], '0', g.exons.length,
@@ -113,8 +115,8 @@ const fmtHit = (r: [number, number, number], prefix: string, i: number) =>
     body += `${v}\n`;
     vals.push([p, p + step, v]);
   }
-  write('tracks/demo_sprn.wig', body);
-  write('tracks/demo_sprn_hits.bed', hits(vals, 3, 'sprn'));
+  write(`${DEMO_TRACKS}/demo_sprn.wig`, body);
+  write(`${DEMO_TRACKS}/demo_sprn_hits.bed`, hits(vals, 3, 'sprn'));
 }
 
 // SPRi: bedGraph, cluster over the first half of DEMO2
@@ -127,8 +129,8 @@ const fmtHit = (r: [number, number, number], prefix: string, i: number) =>
     const v = +sample(peaks, p, 0.6, 8.9).toFixed(3);
     if (v > 0.02) { lines.push(`${CHROM}\t${p}\t${p + step}\t${v}`); vals.push([p, p + step, v]); }
   }
-  write('tracks/demo_spri.bedGraph', lines.join('\n') + '\n');
-  write('tracks/demo_spri_hits.bed', hits(vals, 3, 'spri'));
+  write(`${DEMO_TRACKS}/demo_spri.bedGraph`, lines.join('\n') + '\n');
+  write(`${DEMO_TRACKS}/demo_spri_hits.bed`, hits(vals, 3, 'spri'));
 }
 
 // SPRa: variableStep, cluster upstream (left half)
@@ -141,8 +143,8 @@ const fmtHit = (r: [number, number, number], prefix: string, i: number) =>
     const v = +sample(peaks, p, 0.7, 8.9).toFixed(3);
     if (v > 0.02) { body += `${p + 1}\t${v}\n`; vals.push([p, p + step, v]); }
   }
-  write('tracks/demo_spra.wig', body);
-  write('tracks/demo_spra_hits.bed', hits(vals, 2.5, 'spra'));
+  write(`${DEMO_TRACKS}/demo_spra.wig`, body);
+  write(`${DEMO_TRACKS}/demo_spra_hits.bed`, hits(vals, 2.5, 'spra'));
 }
 
 // ATAC: sparse peaks only (bedGraph with gaps), log2FC
@@ -156,8 +158,8 @@ const fmtHit = (r: [number, number, number], prefix: string, i: number) =>
     const v = sample(peaks, p, 0, 4.6);
     if (v > 0.15) { const r = +v.toFixed(3); lines.push(`${CHROM}\t${p}\t${p + step}\t${r}`); vals.push([p, p + step, r]); }
   }
-  write('tracks/demo_atac.bedGraph', lines.join('\n') + '\n');
-  write('tracks/demo_atac_peaks.bed', hits(vals, 0.8, 'atac'));
+  write(`${DEMO_TRACKS}/demo_atac.bedGraph`, lines.join('\n') + '\n');
+  write(`${DEMO_TRACKS}/demo_atac_peaks.bed`, hits(vals, 0.8, 'atac'));
 }
 
 // H3K27ac: broad domains, small negative dips (shows altColor)
@@ -175,8 +177,8 @@ const fmtHit = (r: [number, number, number], prefix: string, i: number) =>
     body += `${v}\n`;
     vals.push([p, p + step, v]);
   }
-  write('tracks/demo_h3k27ac.wig', body);
-  write('tracks/demo_h3k27ac_domains.bed', hits(vals, 0.9, 'k27ac'));
+  write(`${DEMO_TRACKS}/demo_h3k27ac.wig`, body);
+  write(`${DEMO_TRACKS}/demo_h3k27ac_domains.bed`, hits(vals, 0.9, 'k27ac'));
 }
 
 // Conservation-like small elements (dense)
@@ -190,7 +192,7 @@ const fmtHit = (r: [number, number, number], prefix: string, i: number) =>
     lines.push(`${CHROM}\t${p}\t${p + len}\tcons_${++i}`);
     p += len + Math.floor(rand() * (inGene ? 1400 : 4200));
   }
-  write('tracks/demo_cons.bed', lines.join('\n') + '\n');
+  write(`${DEMO_TRACKS}/demo_cons.bed`, lines.join('\n') + '\n');
 }
 
 // cCRE-like elements with itemRgb (dense, colored)
@@ -205,7 +207,7 @@ const fmtHit = (r: [number, number, number], prefix: string, i: number) =>
     lines.push([CHROM, p, p + len, `${kind}_${++i}`, 0, '.', p, p + len, rgb].join('\t'));
     p += len + Math.floor(rand() * 2600);
   }
-  write('tracks/demo_ccre.bed', lines.join('\n') + '\n');
+  write(`${DEMO_TRACKS}/demo_ccre.bed`, lines.join('\n') + '\n');
 }
 
 // ------------------------------------------------------------- sequence ----
