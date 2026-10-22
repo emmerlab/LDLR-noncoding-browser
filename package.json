@@ -1,6 +1,6 @@
 {
   "name": "ldlr-locus-browser",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "type": "module",
   "description": "A client-side genome browser that contains tracks related to non-coding landscape of the LDLR locus.",
