@@ -12,7 +12,7 @@ import { helpHash } from '../router';
 const AUTHOR = 'Chinmay Raut';
 const LAB_NAME = 'Emmer Lab';
 const LAB_URL = 'https://emmer.lab.medicine.umich.edu/home';
-const ISSUES_URL = 'https://github.com/cvraut/MM_LDLR_func_viewer/issues/new';
+const ISSUES_URL = 'https://github.com/emmerlab/LDLR-noncoding-browser/issues';
 const FEEDBACK_EMAIL = 'craut@umich.edu';
 const FEEDBACK_SUBJECT = 'LDLR viewer feedback';
 
