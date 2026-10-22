@@ -13,7 +13,8 @@ import { createHeader } from './ui/header';
 import { createViewer } from './pages/viewer';
 import { createHelpPage } from './pages/help';
 import { parsePosition } from './core/coords';
-import { replaceHash, startRouter, viewerHash } from './router';
+import { replaceHash, startRouter, viewerHash, type Route } from './router';
+import { countPageView } from './analytics';
 
 const app = document.getElementById('app')!;
 const tracks = buildTracks(bundle);
@@ -27,7 +28,7 @@ main.append(viewer.el, help.el);
 app.replaceChildren(header.el, main);
 document.title = bundle.title;
 
-let page: 'viewer' | 'help' = 'viewer';
+let page: Route['page'] | null = null; // null until the first route
 
 // Keep the URL hash in step with the view (debounced, no history spam).
 let hashTimer = 0;
@@ -40,6 +41,8 @@ store.subscribe((what) => {
 });
 
 startRouter((route) => {
+  // Count page switches only, not position changes within the viewer.
+  if (route.page !== page) countPageView(bundle.goatcounter, route.page);
   page = route.page;
   header.setPage(route.page);
   viewer.el.hidden = route.page !== 'viewer';

@@ -165,6 +165,8 @@ export interface Bundle {
   tracks: TrackBundle[];
   sequence: SequenceBundle | null;
   help: HelpBundle;
+  /** GoatCounter count endpoint, or null to count nothing (see src/analytics.ts). */
+  goatcounter: string | null;
 }
 
 /** Id reserved for the built-in reference sequence track. */

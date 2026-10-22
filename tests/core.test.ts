@@ -94,5 +94,7 @@ describe('help and config', () => {
     expect(() => validateConfig({ tracks: { 'a.bed': { colr: 'red' } as never } })).toThrow(/Did you mean "color"/);
     expect(() => validateConfig({ tracks: { 'a.bed': { mode: 'tiny' as never } } })).toThrow(/dense, squish, pack, full/);
     expect(() => validateConfig({ title: 'ok', tracks: { 'a.wig': { viewLimits: [0, 10] } } })).not.toThrow();
+    expect(() => validateConfig({ analytics: { goatcounter: 'https://x.goatcounter.com/count' } })).not.toThrow();
+    expect(() => validateConfig({ analytics: { goatcounter: 'x.goatcounter.com' } })).toThrow(/analytics\.goatcounter/);
   });
 });

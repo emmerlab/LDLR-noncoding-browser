@@ -32,6 +32,8 @@ export default defineConfig({
   subtitle: 'Multimodal functional characterization of the <i>LDLR</i> locus',
   defaultPosition: 'chr19:11,039,463-11,163,820',
   sequenceTrack: {label: 'Sequence hg38' },
+  // Visit counts: https://ldlr-noncoding.goatcounter.com (see src/analytics.ts).
+  analytics: { goatcounter: 'https://ldlr-noncoding.goatcounter.com/count' },
   genome: {
     chromSizes: 'genome/chrom.sizes',
     fasta: 'genome/hg38_ldlr_region.fa',

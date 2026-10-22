@@ -75,6 +75,11 @@ export interface BrowserConfig {
   tracks?: Record<string, TrackOptions>;
   /** Folder scanned for track files, relative to the project root. Default "tracks". */
   tracksDir?: string;
+  /** Visit counting (see src/analytics.ts). Omit to count nothing. */
+  analytics?: {
+    /** GoatCounter count endpoint: "https://<code>.goatcounter.com/count". */
+    goatcounter: string;
+  };
 }
 
 /** Identity function that gives tracks.config.ts autocomplete and type checking. */
@@ -94,7 +99,9 @@ const TRACK_KEYS: (keyof TrackOptions)[] = [
 ];
 const TOP_KEYS: (keyof BrowserConfig)[] = [
   'title', 'subtitle', 'defaultPosition', 'genome', 'sequenceTrack', 'maxDataMB', 'tracks', 'tracksDir',
+  'analytics',
 ];
+const GOATCOUNTER_RE = /^https:\/\/[^/\s]+\/count$/;
 const ENUMS: Partial<Record<keyof TrackOptions, readonly string[]>> = {
   windowing: ['max', 'mean', 'min', 'mean+whiskers'],
   graphType: ['bar', 'points'],
@@ -152,6 +159,9 @@ export function validateConfig(config: BrowserConfig): void {
         errors.push(`${where} must be a track name or a list of track names.`);
       }
     }
+  }
+  if (config.analytics && !GOATCOUNTER_RE.test(config.analytics.goatcounter ?? '')) {
+    errors.push('analytics.goatcounter must look like "https://<code>.goatcounter.com/count".');
   }
   if (errors.length) {
     throw new Error(`tracks.config.ts has ${errors.length} problem(s):\n  - ${errors.join('\n  - ')}`);

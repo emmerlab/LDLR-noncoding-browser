@@ -231,6 +231,7 @@ export async function buildBundle(root: string): Promise<BuildResult> {
     tracks,
     sequence,
     help: { html: help.html, toc: help.toc },
+    goatcounter: config.analytics?.goatcounter ?? null,
   };
   const json = JSON.stringify(bundle);
   bundle.buildHash = crypto.createHash('sha1').update(json).digest('hex').slice(0, 10);
